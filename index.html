@@ -443,6 +443,22 @@
         .people-icon::before { content: "👨‍👩‍👧‍👦"; }
         .phone-icon::before { content: "📱"; }
         .location-icon::before { content: "📍"; }
+        .mumbai-icon::before { content: "🏙️"; }
+        .village-icon::before { content: "🏘️"; }
+        
+        .address-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .address-group h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
     </style>
 </head>
 <body>
@@ -480,7 +496,8 @@
                 <li>होटी नंबर (Hoti Number)</li>
                 <li>मोबाइल नंबर</li>
                 <li>परिवार के सदस्यों की संख्या</li>
-                <li>पूरा पता</li>
+                <li>मुंबई पता (Mumbai Address)</li>
+                <li>गाँव पता (Village Address)</li>
                 <li>मुख्य व्यवसाय</li>
             </ul>
             
@@ -530,12 +547,12 @@
                     <form id="registrationForm">
                         <div class="form-group">
                             <label for="name" class="required">परिवार के मुखिया का नाम | Head of Family Name *</label>
-                            <input type="text" id="name" required placeholder="राम सिंह | Vinod Parmar">
+                            <input type="text" id="name" required placeholder=" | Vinod Parmar">
                         </div>
                         
                         <div class="form-group">
-                            <label for="hotiNo" class="required">होटी नंबर | Hoti Number *</label>
-                            <input type="text" id="hotiNo" required placeholder="एच-१२३ | H-123">
+                            <label for="hotiNo" class="required">होती नंबर | Hoti Number *</label>
+                            <input type="text" id="hotiNo" required placeholder="१२३ | 123">
                         </div>
                         
                         <div class="form-group">
@@ -560,14 +577,20 @@
                             </select>
                         </div>
                         
-                        <div class="form-group">
-                            <label for="address" class="required">पूरा पता | Complete Address Mumbai *</label>
-                            <textarea id="address" rows="3" placeholder="गाँव सेवाडी, पोस्ट..., तहसील..., जिला..." required></textarea>
+                        <div class="address-group">
+                            <h3>🏙️ मुंबई पता | Mumbai Address</h3>
+                            <div class="form-group">
+                                <label for="mumbaiAddress" class="required">मुंबई पूरा पता | Complete Mumbai Address *</label>
+                                <textarea id="mumbaiAddress" rows="3" placeholder="फ्लैट नंबर, बिल्डिंग नाम, सोसाइटी, इलाका, मुंबई..." required></textarea>
+                            </div>
                         </div>
-
-                        <div class="form-group">
-                            <label for="address" class="required">पूरा पता | Complete Address Sewadi *</label>
-                            <textarea id="address" rows="3" placeholder="गाँव सेवाडी, पोस्ट..., तहसील..., जिला..." required></textarea>
+                        
+                        <div class="address-group">
+                            <h3>🏘️ गाँव पता | Village Address</h3>
+                            <div class="form-group">
+                                <label for="villageAddress" class="required">गाँव पूरा पता | Complete Village Address *</label>
+                                <textarea id="villageAddress" rows="3" placeholder="गाँव सेवाडी, पोस्ट..., तहसील..., जिला..." required></textarea>
+                            </div>
                         </div>
                         
                         <div class="form-group">
@@ -619,7 +642,7 @@
             <footer>
                 <p>सेवाडी गाँव निवासी निर्देशिका | Sewadi Village Residents Directory</p>
                 <p>Powered by Firebase Database | सभी जानकारी सुरक्षित है | All information is secure</p>
-                <p>ग्राम प्रधान/संपर्क: [यहाँ संपर्क नंबर डालें] | Sarpanch/Contact: [Add contact number here]</p>
+                <p>Contact 9326240556</p>
                 <p style="margin-top: 10px; color: #2e7d32; font-weight: bold;">
                     ✅ सभी उपयोगकर्ताओं ने डेटा साझा करने की अनुमति प्रदान की है | All users have provided consent for data sharing
                 </p>
@@ -739,7 +762,8 @@
                     hotiNo: document.getElementById('hotiNo').value.trim().toUpperCase(),
                     phone: document.getElementById('phone').value.trim(),
                     totalMembers: document.getElementById('totalMembers').value,
-                    address: document.getElementById('address').value.trim(),
+                    mumbaiAddress: document.getElementById('mumbaiAddress').value.trim(),
+                    villageAddress: document.getElementById('villageAddress').value.trim(),
                     occupation: document.getElementById('occupation').value.trim(),
                     consentGiven: true,
                     consentTimestamp: localStorage.getItem('consentTimestamp'),
@@ -813,7 +837,8 @@
                 family.name.toLowerCase().includes(term) ||
                 family.hotiNo.toLowerCase().includes(term) ||
                 family.phone.includes(term) ||
-                (family.address && family.address.toLowerCase().includes(term)) ||
+                (family.mumbaiAddress && family.mumbaiAddress.toLowerCase().includes(term)) ||
+                (family.villageAddress && family.villageAddress.toLowerCase().includes(term)) ||
                 (family.occupation && family.occupation.toLowerCase().includes(term))
             );
             
@@ -853,12 +878,16 @@
                                 <span class="detail-value">${family.totalMembers}</span>
                             </div>
                             <div class="detail-item">
-                                <span class="detail-label location-icon">पता:</span>
-                                <span class="detail-value">${family.address}</span>
+                                <span class="detail-label mumbai-icon">मुंबई पता:</span>
+                                <span class="detail-value">${family.mumbaiAddress || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label village-icon">गाँव पता:</span>
+                                <span class="detail-value">${family.villageAddress || 'N/A'}</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">व्यवसाय:</span>
-                                <span class="detail-value">${family.occupation}</span>
+                                <span class="detail-value">${family.occupation || 'N/A'}</span>
                             </div>
                             <div class="detail-item">
                                 <span class="detail-label">अनुमति:</span>
