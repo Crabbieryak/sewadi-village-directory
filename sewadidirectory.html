@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sewadi Village Residents Directory</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            background-image: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), 
+                            url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><path fill="%23e8f5e9" d="M50,10 C70,10 85,25 85,45 C85,65 70,80 50,80 C30,80 15,65 15,45 C15,25 30,10 50,10 Z"/></svg>');
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Police Acceptance Page Styles */
+        .acceptance-page {
+            max-width: 800px;
+            margin: 50px auto;
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border: 3px solid #2e7d32;
+        }
+        
+        .acceptance-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #4caf50;
+        }
+        
+        .police-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #2e7d32;
+        }
+        
+        .terms-box {
+            background: #f9f9f9;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.8;
+        }
+        
+        .terms-box h3 {
+            color: #2e7d32;
+            margin-bottom: 15px;
+        }
+        
+        .terms-box ul {
+            padding-left: 20px;
+            margin: 15px 0;
+        }
+        
+        .terms-box li {
+            margin-bottom: 10px;
+        }
+        
+        .consent-checkbox {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin: 25px 0;
+            padding: 20px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            border: 2px solid #4caf50;
+        }
+        
+        .consent-checkbox input {
+            width: 25px;
+            height: 25px;
+            margin-top: 3px;
+        }
+        
+        .consent-label {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2e7d32;
+        }
+        
+        .accept-btn {
+            background: linear-gradient(to right, #2e7d32, #4caf50);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .accept-btn:hover {
+            background: linear-gradient(to right, #1b5e20, #388e3c);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .accept-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        /* Main Directory Page Styles */
+        .directory-content {
+            display: none; /* Hidden until accepted */
+        }
+        
+        header {
+            background: linear-gradient(135deg, #2e7d32, #4caf50);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(46, 125, 50, 0.2);
+            border: 2px solid #1b5e20;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .village-name {
+            font-size: 1.8rem;
+            color: #c8e6c9;
+            margin-bottom: 15px;
+        }
+        
+        .tagline {
+            font-size: 1.2rem;
+            opacity: 0.95;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .main-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .section {
+            flex: 1;
+            min-width: 350px;
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e0e0e0;
+        }
+        
+        h2 {
+            color: #2e7d32;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #c8e6c9;
+            font-size: 1.8rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        label.required::after {
+            content: " *";
+            color: #d32f2f;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #f9f9f9;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: #4caf50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            background-color: white;
+        }
+        
+        .btn {
+            background: linear-gradient(to right, #2e7d32, #4caf50);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .btn:hover {
+            background: linear-gradient(to right, #1b5e20, #388e3c);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        .search-box input {
+            flex: 1;
+        }
+        
+        .search-box button {
+            width: auto;
+            padding: 12px 25px;
+            background: linear-gradient(to right, #1976d2, #2196f3);
+        }
+        
+        .search-box button:hover {
+            background: linear-gradient(to right, #1565c0, #1976d2);
+        }
+        
+        .resident-card {
+            background: linear-gradient(145deg, #ffffff, #f5f5f5);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border-left: 6px solid #4caf50;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .resident-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        
+        .resident-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2e7d32;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .resident-name::before {
+            content: "👤";
+            font-size: 1.2rem;
+        }
+        
+        .resident-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .detail-item {
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            color: #666;
+            display: inline-block;
+            width: 140px;
+        }
+        
+        .detail-value {
+            color: #333;
+        }
+        
+        .no-result {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            border: 2px dashed #ddd;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+            border-radius: 15px;
+            padding: 25px;
+            margin-top: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            border: 1px solid #a5d6a7;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 0 20px;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2e7d32;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #555;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .firebase-status {
+            background-color: #e3f2fd;
+            border: 2px solid #bbdefb;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 600;
+            color: #1976d2;
+        }
+        
+        .village-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        
+        .success-message {
+            background-color: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            color: #2e7d32;
+            font-weight: 600;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .village-name {
+                font-size: 1.4rem;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .search-box button {
+                width: 100%;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .resident-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .acceptance-page {
+                margin: 20px auto;
+                padding: 20px;
+            }
+            
+            .police-icon {
+                font-size: 3rem;
+            }
+        }
+        
+        /* Village theme colors */
+        .home-icon::before { content: "🏠"; }
+        .people-icon::before { content: "👨‍👩‍👧‍👦"; }
+        .phone-icon::before { content: "📱"; }
+        .location-icon::before { content: "📍"; }
+        .mumbai-icon::before { content: "🏙️"; }
+        .village-icon::before { content: "🏘️"; }
+        
+        .address-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+        }
+        
+        .address-group h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Police Acceptance Page -->
+    <div class="acceptance-page" id="acceptancePage">
+        <div class="acceptance-header">
+            <div class="police-icon">👮‍♂️</div>
+            <h1>CREATED BY ARTH VINOD PARMAR</h1>
+            <h2>Sewadi Village - Data Collection Consent</h2>
+        </div>
+        
+        <div class="terms-box">
+            <h3>📜 अनुमति एवं नियम | Consent & Rules</h3>
+            <p>सेवाडी गाँव के प्रत्येक परिवार से निवेदन है कि गाँव की डिजिटल निर्देशिका में आपका डेटा शामिल करने से पहले निम्नलिखित बातें ध्यानपूर्वक पढ़ें:</p>
+            
+            <h4>✅ डेटा संग्रह का उद्देश्य | Purpose of Data Collection:</h4>
+            <ul>
+                <li>गाँव के सभी परिवारों की जानकारी एक स्थान पर रखना</li>
+                <li>आपातकालीन स्थिति में संपर्क करने में सहायता</li>
+                <li>सामाजिक कल्याण योजनाओं का लाभ पहुँचाने में मदद</li>
+                <li>गाँव के विकास कार्यों की योजना बनाना</li>
+            </ul>
+            
+            <h4>🔒 डेटा सुरक्षा | Data Security:</h4>
+            <ul>
+                <li>सभी जानकारी सुरक्षित डेटाबेस में संग्रहित की जाएगी</li>
+                <li>केवल गाँव के अधिकृत व्यक्तियों को ही पहुँच होगी</li>
+                <li>किसी भी जानकारी का दुरुपयोग नहीं किया जाएगा</li>
+                <li>आप कभी भी अपनी जानकारी हटवा सकते हैं</li>
+            </ul>
+            
+            <h4>📋 संग्रह की जाने वाली जानकारी | Information to be Collected:</h4>
+            <ul>
+                <li>परिवार के मुखिया का नाम</li>
+                <li>होटी नंबर (Hoti Number)</li>
+                <li>मोबाइल नंबर</li>
+                <li>परिवार के सदस्यों की संख्या</li>
+                <li>मुंबई पता (Mumbai Address)</li>
+                <li>गाँव पता (Village Address)</li>
+                <li>मुख्य व्यवसाय</li>
+            </ul>
+            
+            <h4>⚠️ महत्वपूर्ण नोट | Important Note:</h4>
+            <p>यह जानकारी केवल गाँव के कल्याण के लिए उपयोग की जाएगी। किसी भी प्रकार के व्यावसायिक उपयोग या दुरुपयोग के विरुद्ध कानूनी कार्रवाई की जा सकती है।</p>
+            
+            <p style="color: #d32f2f; font-weight: bold; margin-top: 20px;">
+                ⚖️ भारतीय दंड संहिता की धारा 43(क) के तहत बिना अनुमति व्यक्तिगत डेटा संग्रह करना दंडनीय अपराध है।
+            </p>
+        </div>
+        
+        <div class="consent-checkbox">
+            <input type="checkbox" id="consentCheckbox">
+            <label for="consentCheckbox" class="consent-label">
+                ✅ मैं उपरोक्त सभी शर्तों को पढ़ और समझ चुका/चुकी हूँ तथा सेवाडी गाँव की डिजिटल निर्देशिका में अपना डेटा साझा करने के लिए सहमति प्रदान करता/करती हूँ।
+                <br><br>
+                ✅ I have read and understood all the above terms and conditions, and I consent to share my data in Sewadi Village Digital Directory.
+            </label>
+        </div>
+        
+        <button class="accept-btn" id="acceptBtn" disabled>
+            🔒 अनुमति प्रदान करें एवं फॉर्म भरें | Provide Consent & Fill Form
+        </button>
+        
+        <div style="text-align: center; margin-top: 20px; color: #666; font-size: 0.9rem;">
+            <p>📞 कोई प्रश्न हो तो ग्राम प्रधान से संपर्क करें | Contact Sarpanch for any queries</p>
+        </div>
+    </div>
+
+    <!-- Main Directory Page (Hidden until accepted) -->
+    <div class="directory-content" id="directoryContent">
+        <div class="container">
+            <header>
+                <div class="village-icon">🏘️</div>
+                <h1>सेवाडी गाँव निवासी निर्देशिका</h1>
+                <div class="village-name">Sewadi Village Residents Directory</div>
+                <p class="tagline">हमारे गाँव के सभी परिवारों की जानकारी एक स्थान पर | All village families information in one place</p>
+            </header>
+            
+            <div class="firebase-status" id="firebaseStatus">
+                <p>🔵 डेटाबेस कनेक्ट हो रहा है... | Arth Vinod Parmar</p>
+            </div>
+            
+            <div class="main-content">
+                <section class="section">
+                    <h2>📝 नया रजिस्ट्रेशन | New Registration</h2>
+                    <form id="registrationForm">
+                        <div class="form-group">
+                            <label for="name" class="required">परिवार के मुखिया का नाम | Head of Family Name *</label>
+                            <input type="text" id="name" required placeholder=" | Vinod Parmar">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="hotiNo" class="required">होती नंबर | Hoti Number *</label>
+                            <input type="text" id="hotiNo" required placeholder="१२३ | 123">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone" class="required">मोबाइल नंबर | Mobile Number *</label>
+                            <input type="tel" id="phone" required placeholder="९८७६५४३२१० | 9876543210">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="totalMembers" class="required">कुल परिवार के सदस्य | Total Family Members *</label>
+                            <select id="totalMembers" required>
+                                <option value="">चुनें | Select</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10+">10+</option>
+                            </select>
+                        </div>
+                        
+                        <div class="address-group">
+                            <h3>🏙️ मुंबई पता | Mumbai Address</h3>
+                            <div class="form-group">
+                                <label for="mumbaiAddress" class="required">मुंबई पूरा पता | Complete Mumbai Address *</label>
+                                <textarea id="mumbaiAddress" rows="3" placeholder="फ्लैट नंबर, बिल्डिंग नाम, सोसाइटी, इलाका, मुंबई..." required></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="address-group">
+                            <h3>🏘️ गाँव पता | Village Address</h3>
+                            <div class="form-group">
+                                <label for="villageAddress" class="required">गाँव पूरा पता | Complete Village Address *</label>
+                                <textarea id="villageAddress" rows="3" placeholder="गाँव सेवाडी, पोस्ट..., तहसील..., जिला..." required></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="occupation" class="required">मुख्य व्यवसाय | Main Occupation *</label>
+                            <input type="text" id="occupation" required placeholder="किसान, व्यवसाय, नौकरी, आदि">
+                        </div>
+                        
+                        <button type="submit" class="btn">✅ रजिस्टर करें | Register Now</button>
+                    </form>
+                    
+                    <div class="success-message" id="successMessage">
+                        ✅ रजिस्ट्रेशन सफल! | Registration Successful!
+                    </div>
+                </section>
+                
+                <section class="section">
+                    <h2>🔍 खोजें | Search</h2>
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="नाम या होटी नंबर से खोजें | Search by name or hoti number">
+                        <button class="btn" id="searchBtn">खोजें | Search</button>
+                    </div>
+                    
+                    <div id="searchResults">
+                        <div class="no-result">
+                            🔍 नाम या होटी नंबर डालकर खोजें | Enter name or hoti number to search
+                        </div>
+                    </div>
+                </section>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="icon">👨‍👩‍👧‍👦</div>
+                    <div class="stat-value" id="totalFamilies">0</div>
+                    <div class="stat-label">कुल परिवार | Total Families</div>
+                </div>
+                <div class="stat-item">
+                    <div class="icon">🏠</div>
+                    <div class="stat-value" id="totalMembersCount">0</div>
+                    <div class="stat-label">कुल सदस्य | Total Members</div>
+                </div>
+                <div class="stat-item">
+                    <div class="icon">📊</div>
+                    <div class="stat-value" id="searchCount">0</div>
+                    <div class="stat-label">खोजें | Searches</div>
+                </div>
+            </div>
+            
+            <footer>
+                <p>सेवाडी गाँव निवासी निर्देशिका | Sewadi Village Residents Directory</p>
+                <p>Powered by Firebase Database | सभी जानकारी सुरक्षित है | All information is secure</p>
+                <p>Contact 9326240556</p>
+                <p style="margin-top: 10px; color: #2e7d32; font-weight: bold;">
+                    ✅ सभी उपयोगकर्ताओं ने डेटा साझा करने की अनुमति प्रदान की है | All users have provided consent for data sharing
+                </p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // ==================== FIREBASE CONFIGURATION ====================
+        // YAHAN APNA FIREBASE CONFIG PASTE KAREIN
+        const firebaseConfig = {
+            apiKey: "AIzaSyAhaqlEIp1L_cgboH5LeFmUMRl4C-HcVbI",
+            authDomain: "sewadi.firebaseapp.com",
+            projectId: "sewadi",
+            storageBucket: "sewadi.firebasestorage.app",
+            messagingSenderId: "474312247116",
+            appId: "1:474312247116:web:42943870f766f5e5f631e9",
+            measurementId: "G-96NDMPXY5X"
+        };
+        // =================================================================
+        
+        // Police Acceptance Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const consentCheckbox = document.getElementById('consentCheckbox');
+            const acceptBtn = document.getElementById('acceptBtn');
+            const acceptancePage = document.getElementById('acceptancePage');
+            const directoryContent = document.getElementById('directoryContent');
+            
+            // Check if user already accepted
+            if(localStorage.getItem('sewadiConsent') === 'accepted') {
+                acceptancePage.style.display = 'none';
+                directoryContent.style.display = 'block';
+                initializeFirebase();
+            }
+            
+            // Enable/Disable accept button based on checkbox
+            consentCheckbox.addEventListener('change', function() {
+                acceptBtn.disabled = !this.checked;
+            });
+            
+            // Handle acceptance
+            acceptBtn.addEventListener('click', function() {
+                if(consentCheckbox.checked) {
+                    // Store consent in localStorage
+                    localStorage.setItem('sewadiConsent', 'accepted');
+                    localStorage.setItem('consentTimestamp', new Date().toISOString());
+                    
+                    // Hide acceptance page, show directory
+                    acceptancePage.style.display = 'none';
+                    directoryContent.style.display = 'block';
+                    
+                    // Initialize Firebase after acceptance
+                    initializeFirebase();
+                }
+            });
+        });
+        
+        // Firebase Initialization
+        function initializeFirebase() {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                const db = firebase.firestore();
+                
+                // Update status
+                document.getElementById('firebaseStatus').innerHTML = 
+                    '<p>🟢 डेटाबेस कनेक्टेड | Database Connected Successfully!</p>';
+                document.getElementById('firebaseStatus').style.backgroundColor = '#e8f5e9';
+                document.getElementById('firebaseStatus').style.borderColor = '#4caf50';
+                document.getElementById('firebaseStatus').style.color = '#2e7d32';
+                
+                // Load families and set up event listeners
+                loadFamilies(db);
+                setupEventListeners(db);
+                
+            } catch (error) {
+                document.getElementById('firebaseStatus').innerHTML = 
+                    '<p>🔴 कनेक्शन विफल! कृपया कॉन्फ़िगरेशन जाँचें | Connection Failed! Check configuration.</p>';
+                console.error("Firebase Error: ", error);
+            }
+        }
+        
+        // Variables
+        let allFamilies = [];
+        let searchCount = 0;
+        let dbInstance = null;
+        
+        // Load all families from Firebase
+        async function loadFamilies(db) {
+            try {
+                dbInstance = db;
+                const snapshot = await db.collection('sewadiFamilies').get();
+                allFamilies = [];
+                snapshot.forEach(doc => {
+                    allFamilies.push({ id: doc.id, ...doc.data() });
+                });
+                displayFamilies(allFamilies);
+                updateStats();
+            } catch (error) {
+                console.error("Error loading families: ", error);
+            }
+        }
+        
+        // Setup event listeners for form and search
+        function setupEventListeners(db) {
+            // Handle form submission
+            document.getElementById('registrationForm').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Get consent status
+                if(localStorage.getItem('sewadiConsent') !== 'accepted') {
+                    alert("❌ कृपया पहले अनुमति प्रदान करें | Please provide consent first.");
+                    return;
+                }
+                
+                const familyData = {
+                    name: document.getElementById('name').value.trim(),
+                    hotiNo: document.getElementById('hotiNo').value.trim().toUpperCase(),
+                    phone: document.getElementById('phone').value.trim(),
+                    totalMembers: document.getElementById('totalMembers').value,
+                    mumbaiAddress: document.getElementById('mumbaiAddress').value.trim(),
+                    villageAddress: document.getElementById('villageAddress').value.trim(),
+                    occupation: document.getElementById('occupation').value.trim(),
+                    consentGiven: true,
+                    consentTimestamp: localStorage.getItem('consentTimestamp'),
+                    registrationTimestamp: new Date().toISOString()
+                };
+                
+                try {
+                    // Check if family already exists
+                    const existingFamily = allFamilies.find(family => 
+                        family.hotiNo === familyData.hotiNo || family.phone === familyData.phone
+                    );
+                    
+                    if (existingFamily) {
+                        // Update existing family
+                        await db.collection('sewadiFamilies').doc(existingFamily.id).update(familyData);
+                        showSuccessMessage(`✅ होटी नंबर ${familyData.hotiNo} अपडेट हो गया | Hoti No ${familyData.hotiNo} updated!`);
+                    } else {
+                        // Add new family
+                        await db.collection('sewadiFamilies').add(familyData);
+                        showSuccessMessage(`✅ नया रजिस्ट्रेशन सफल! | New registration successful!`);
+                    }
+                    
+                    // Reload families
+                    await loadFamilies(db);
+                    
+                    // Clear form
+                    document.getElementById('registrationForm').reset();
+                    
+                } catch (error) {
+                    alert("❌ त्रुटि! पुनः प्रयास करें | Error! Please try again.");
+                    console.error("Save error: ", error);
+                }
+            });
+            
+            // Handle search
+            document.getElementById('searchBtn').addEventListener('click', performSearch);
+            document.getElementById('searchInput').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') performSearch();
+            });
+            
+            // Real-time updates
+            db.collection('sewadiFamilies').onSnapshot(() => {
+                loadFamilies(db);
+            });
+        }
+        
+        // Show success message
+        function showSuccessMessage(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                successDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Perform search
+        function performSearch() {
+            const term = document.getElementById('searchInput').value.toLowerCase().trim();
+            searchCount++;
+            updateStats();
+            
+            if (!term) {
+                displayFamilies(allFamilies);
+                return;
+            }
+            
+            const filtered = allFamilies.filter(family => 
+                family.name.toLowerCase().includes(term) ||
+                family.hotiNo.toLowerCase().includes(term) ||
+                family.phone.includes(term) ||
+                (family.mumbaiAddress && family.mumbaiAddress.toLowerCase().includes(term)) ||
+                (family.villageAddress && family.villageAddress.toLowerCase().includes(term)) ||
+                (family.occupation && family.occupation.toLowerCase().includes(term))
+            );
+            
+            displayFamilies(filtered);
+        }
+        
+        // Display families
+        function displayFamilies(families) {
+            const container = document.getElementById('searchResults');
+            
+            if (families.length === 0) {
+                container.innerHTML = `
+                    <div class="no-result">
+                        ❌ कोई परिवार नहीं मिला | No family found.<br>
+                        कृपया दूसरा नाम या होटी नंबर आज़माएँ | Please try another name or hoti number.
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            families.forEach(family => {
+                html += `
+                    <div class="resident-card">
+                        <div class="resident-name">${family.name}</div>
+                        <div class="resident-details">
+                            <div class="detail-item">
+                                <span class="detail-label home-icon">होटी नंबर:</span>
+                                <span class="detail-value">${family.hotiNo}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label phone-icon">मोबाइल:</span>
+                                <span class="detail-value">${family.phone}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label people-icon">सदस्य:</span>
+                                <span class="detail-value">${family.totalMembers}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label mumbai-icon">मुंबई पता:</span>
+                                <span class="detail-value">${family.mumbaiAddress || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label village-icon">गाँव पता:</span>
+                                <span class="detail-value">${family.villageAddress || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">व्यवसाय:</span>
+                                <span class="detail-value">${family.occupation || 'N/A'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">अनुमति:</span>
+                                <span class="detail-value" style="color: #2e7d32; font-weight: bold;">✅ दी गई | Given</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // Update statistics
+        function updateStats() {
+            // Calculate total members
+            let totalMembersCount = 0;
+            allFamilies.forEach(family => {
+                const members = parseInt(family.totalMembers) || 1;
+                totalMembersCount += members;
+            });
+            
+            document.getElementById('totalFamilies').textContent = allFamilies.length;
+            document.getElementById('totalMembersCount').textContent = totalMembersCount;
+            document.getElementById('searchCount').textContent = searchCount;
+        }
+    </script>
+</body>
+</html>
